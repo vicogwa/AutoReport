@@ -7,7 +7,8 @@ Description: >
 
 Globals:
   Function:
-    Timeout: 3
+    Timeout: 15
+    MemorySize: 512
 
     LoggingConfig:
       LogFormat: JSON
@@ -17,7 +18,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/
-      Handler: functions/transport-report
+      Handler: functions/transaction-report.reportHandler
       Runtime: nodejs20.x
       Architectures:
       - x86_64
@@ -25,7 +26,8 @@ Resources:
         DailySchedule:
           Type: Schedule
           Properties:
-            Schedule: "cron(0 0 * * ? *)" 
+            # Schedule: "cron(0 0 * * ? *)" 
+            Schedule: "cron(0/2 * * * ? *)"
             Description: "Trigger Lambda daily"
             Name: "DailyTransactionReport"
             Input: '{"schedule": "daily"}'

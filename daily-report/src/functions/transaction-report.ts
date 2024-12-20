@@ -1,28 +1,25 @@
-import { SQSEvent, SQSHandler } from "aws-lambda";
-import { ReportService } from "../services";
-export const handler: SQSHandler = async (event: any): Promise<void> => {
-  try {
-    const schedule = event.schedule || ""; 
-    const reportService = new ReportService();
+import { SQSEvent, SQSHandler } from 'aws-lambda';
+import { ReportService } from '../services';
 
-    switch (schedule) {
-        case "daily":
-          console.log("Running daily report...");
-          await reportService.runDailyReport();
-          break;
-      
-        case "monthly":
-          console.log("Running monthly report...");
-          await reportService.runMonthlyReport();
-          break;
-      
-        default:
-          console.error("No valid schedule provided.");
-          break;
-      }
-      
-  } catch (error) {
-    console.error("Error occurred:", error);
-    throw error;
-  }
+export const reportHandler = async (event: any): Promise<void> => {
+    try {
+        console.log('EVENT', event);
+        // for (const record of event.Records) {
+        //     const body = JSON.parse(record.body);
+        const schedule = event.schedule || '';
+        const userId = event.userId || 27688;
+
+        const reportService = new ReportService();
+
+        if (schedule === 'daily' || schedule === 'monthly') {
+            console.log(`Running ${schedule} report for user ${userId}...`);
+            await reportService.generateReport(schedule, userId);
+        } else {
+            console.error('Invalid or missing schedule provided.');
+        }
+        // }
+    } catch (error) {
+        console.error('Error occurred:', error);
+        throw error;
+    }
 };
