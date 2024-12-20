@@ -1,5 +1,5 @@
 import mysql from 'mysql2/promise';
-import { MysqlDBClient, S3Client } from '../shared';
+import { EmailService, MysqlDBClient, S3Client } from '../shared';
 import * as fs from 'fs';
 import * as path from 'path';
 import dayjs from 'dayjs';
@@ -7,6 +7,8 @@ import dayjs from 'dayjs';
 export class ReportService {
     private dataSource = new MysqlDBClient();
     private s3Client = new S3Client();
+    private emailService = new EmailService();
+    private emailAddress = 'victoriafrancis885@gmail.com';
 
     private async fetchData(query: string, params: any[] = []): Promise<any[]> {
         let sqlClient: mysql.Connection | undefined;
@@ -84,7 +86,7 @@ export class ReportService {
         throw new Error('Invalid schedule type');
     }
 
-    public async generateReport(schedule: string, userId: number): Promise<void> {
+    public async generateReport(schedule: string, userId: number): Promise<boolean> {
         const query = this.getQuery(schedule);
         const results = await this.fetchData(query, [userId, userId, userId, userId, userId]);
         const queryDate = this.getCurrentDateForSchedule(schedule);
@@ -101,8 +103,20 @@ export class ReportService {
         await this.saveReportToFile(filePath, results);
 
         // Zip and upload
-        await this.s3Client.zipAndUploadFolderToS3('user@example.com', queryDate, tempFolderPath, `${schedule} Report`);
+        await this.s3Client.zipAndUploadFolderToS3(queryDate, tempFolderPath, `${schedule} Report`);
+        const emailSubject = `${schedule.toUpperCase()} Report`;
+
+        // Generate download link
+        const downloadLink = await this.s3Client.getDownloadLink(
+            `transactions_${queryDate}}/transactions.zip`,
+            emailSubject,
+        );
+        console.log('downloadLink ', downloadLink);
 
         console.log(`${schedule} report generated and uploaded to S3.`);
+
+        await this.emailService.sendReportEmail(this.emailAddress, emailSubject, downloadLink);
+
+        return true;
     }
 }

@@ -7,7 +7,7 @@ Description: >
 
 Globals:
   Function:
-    Timeout: 15
+    Timeout: 150
     MemorySize: 512
 
     LoggingConfig:

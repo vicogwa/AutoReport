@@ -6,14 +6,14 @@ export class S3Client {
     private readonly s3BucketName = 'dev-accelerate-report-exports';
     s3 = new AWS.S3({ region: 'us-east-1' });
 
-    async zipAndUploadFolderToS3(email: string, queryDate: string, folderPath: string, subject: string): Promise<void> {
+    async zipAndUploadFolderToS3(queryDate: string, folderPath: string, subject: string): Promise<void> {
         const zipFilePath = `/tmp/${this.getFileName(subject, queryDate)}.zip`;
 
         await this.zipFolder(folderPath, zipFilePath);
 
         const fileContent = fs.readFileSync(zipFilePath);
 
-        await this.uploadToS3(`${email}_transactions_${queryDate}`, 'transactions.zip', fileContent, subject);
+        await this.uploadToS3(`transactions_${queryDate}`, 'transactions.zip', fileContent, subject);
 
         fs.unlinkSync(zipFilePath);
     }
